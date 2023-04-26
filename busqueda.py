@@ -1,4 +1,5 @@
 import random
+import re
 from queue import PriorityQueue
 
 class Nodo:
@@ -51,23 +52,25 @@ class Arbol:
         return camino, costo, self.nodos_expandidos, False
 
 def leer_archivo(nombre_archivo):
-    with open(nombre_archivo) as archivo:
-        contenido = archivo.read().split('\n')
-
-        nodo_inicio = contenido[0].split()[1]
-        nodo_final = contenido[1].split()[1]
-
-        grafo = {}
-        for i in range(2, len(contenido)):
-            if contenido[i]:
-                if len(contenido[i].split()) == 2:
-                    nodo, heuristica = contenido[i].split()
-                    grafo[nodo] = []
-                else:
-                    origen, destino, costo = contenido[i].split()
-                    grafo[origen].append((destino, int(costo)))
-
-    return grafo, nodo_inicio, nodo_final
+    grafo = {}
+    with open(nombre_archivo, 'r') as archivo:
+        contenido = archivo.readlines()
+        for i in range(len(contenido)):
+            linea = contenido[i].strip()
+            if linea.startswith('Init'):
+                nodo_inicial = linea.split()[1]
+            elif linea.startswith('Goal'):
+                nodo_meta = linea.split()[1]
+            elif re.match(r'^\w+\s+\d+(\.\d+)?$', linea):
+                nodo, heuristica = linea.split()
+                grafo[nodo] = []
+            elif re.match(r'^\w+\s+\w+\s+\d+(\.\d+)?$', linea):
+                origen, destino, costo = linea.split()
+                grafo[origen].append((destino, int(costo)))
+            elif re.match(r'^\w+\s+\w+\s+\d+(\.\d+)?\s+\[\s*\d+\s*\]$', linea):
+                origen, destino, costo, acciones = re.findall(r'\w+', linea)
+                grafo[origen].append((destino, int(costo), acciones.split(',')))
+    return grafo, heuristica if heuristica else None
 
 def busqueda_greedy(arbol, f_meta):
     pila_nodos = [(arbol.nodo_init, f_meta(arbol.nodo_init))]
@@ -109,10 +112,11 @@ def busqueda_costo_uniforme(nodo_inicial, nodo_objetivo):
 
 
 if __name__ == '__main__':
-    arbol = leer_archivo('grafo.txt')
+    grafo, heuristica = leer_archivo('grafo.txt')
     heuristica = lambda n: int(n.valor_h)
     
     print('Búsqueda DFS aleatoria')
+    arbol = Arbol(grafo, heuristica)
     dfs_aleatoria = arbol.busqueda_dfs_aleatoria()
     print('Camino:', dfs_aleatoria)
     print('Costo:', arbol.calcular_costo_camino(dfs_aleatoria))
