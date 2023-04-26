@@ -51,31 +51,30 @@ class Arbol:
         return camino, costo, self.nodos_expandidos, False
 
 def leer_archivo(nombre_archivo):
-    with open(nombre_archivo, 'r') as f:
-        lineas = f.readlines()
+    with open(nombre_archivo) as archivo:
+        contenido = archivo.readlines()
     
-    linea_init = lineas[0].strip()
-    linea_goal = lineas[1].strip()
-    info_nodos = lineas[2:-1]
-    info_aristas = lineas[-1].strip().split(', ')
-    
-    init = Nodo(linea_init.split()[1])
-    goal = Nodo(linea_goal.split()[1])
-    
+    init = contenido[0].split()[1]
+    goal = contenido[1].split()[1]
+
+    nodos_heuristicas = {}
+    for i in range(2, len(contenido)-1):
+        nodo, heuristica = contenido[i].split()
+        nodos_heuristicas[nodo] = int(heuristica)
+
+    aristas = []
+    for i in range(len(contenido)-1, len(contenido)*2-2):
+        datos_arista = contenido[i].split()
+        arista = (datos_arista[0], datos_arista[1], int(datos_arista[2]))
+        aristas.append(arista)
+
     arbol = Arbol(init, goal)
-    nodos = {init.nombre: init}
-    
-    for info in info_nodos:
-        nombre, valor_h = info.strip().split()
-        nodos[nombre] = Nodo(nombre, valor_h)
-    
-    for info in info_aristas:
-        nombre1, nombre2, costo = info.strip().split()
-        nodos[nombre1].add_sucesor(nodos[nombre2], int(costo))
-    
-    for nodo in nodos.values():
-        arbol.agregar_nodo(nodo)
-    
+    for arista in aristas:
+        nodo1, nodo2, costo = arista
+        nodo1 = Nodo(nodo1, nodos_heuristicas[nodo1])
+        nodo2 = Nodo(nodo2, nodos_heuristicas[nodo2])
+        arbol.agregar_arista(nodo1, nodo2, costo)
+
     return arbol
 
 def busqueda_greedy(arbol, f_meta):
@@ -96,7 +95,7 @@ def busqueda_greedy(arbol, f_meta):
                 pila_nodos.append((sucesor, f_meta(sucesor)))
     
     return False
-    
+
 def busqueda_costo_uniforme(nodo_inicial, nodo_objetivo):
     frontera = PriorityQueue()
     frontera.put(nodo_inicial)
