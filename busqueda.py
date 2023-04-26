@@ -1,16 +1,43 @@
 import random
+from queue import PriorityQueue
 
 class Nodo:
-    def __init__(self, nombre, sucesores=None):
+    def __init__(self, nombre, costo=0, sucesores=None):
         self.nombre = nombre
+        self.costo = costo
         self.visitado = False
         self.sucesores = sucesores or []
-    
-    def add_sucesor(self, sucesor):
-        self.sucesores.append(sucesor)
-    
+
+    def add_sucesor(self, sucesor, costo):
+        self.sucesores.append((sucesor, costo))
+
     def get_sucesores(self):
         return self.sucesores
+
+    def __lt__(self, other):
+        return self.costo < other.costo
+    
+    def __eq__(self, other):
+        return self.nombre == other.nombre
+
+def busqueda_costo_uniforme(nodo_inicial, nodo_objetivo):
+    frontera = PriorityQueue()
+    frontera.put(nodo_inicial)
+    
+    while not frontera.empty():
+        nodo_actual = frontera.get()
+        
+        if nodo_actual == nodo_objetivo:
+            return nodo_actual
+        
+        nodo_actual.visitado = True
+        
+        for sucesor, costo in nodo_actual.get_sucesores():
+            if not sucesor.visitado:
+                sucesor.costo = nodo_actual.costo + costo
+                frontera.put(sucesor)
+    
+    return None
     
 class Arbol:
     def __init__(self, raiz):
