@@ -1,7 +1,6 @@
 import heapq
 heur = {}
 sizLines = 0
-import math
 
 def get_heuristic(node, heur):
     return heur.get(node, float('inf'))
