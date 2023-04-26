@@ -1,18 +1,21 @@
 Init: A
-Goal: G
+Goal: H
 A 10
-B 8
-C 7
-D 6
-E 3
+B 7
+C 10
+D 3
+E 1
 F 2
-G 0
+G 2
+H 0
 Change: 
-A,B,2
-A,C,4
+A,B,11
+A,C,6
 B,D,4
-B,E,6
-C,F,4
-D,G,3
-E,G,1
-F,G,2
+B,E,3
+C,E,10
+C,F,3
+D,H,3
+E,H,5
+F,G,1
+G,E,4

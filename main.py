@@ -1,7 +1,7 @@
 import heapq
 heur = {}
 sizLines = 0
-
+#EL CAMINO OPTIMO ES DE COSTE 18
 def get_heuristic(node, heur):
     return heur.get(node, float('inf'))
 
@@ -33,26 +33,29 @@ def read_file(graph_name):
             grafo[nodeB][nodeA] = int(cost)
     return grafo, init, goal
 
-def ucs(grafo, init, goal):
-    lista = [(0, init, [init])]
+def ucs(graph, start, goal):
     visited = set()
+    queue = [(0, [start])]
+    expanded = 0
     yes = False
-    while lista:
-        cost, node, way = heapq.heappop(lista)
-        if goal == node:
-            siz = len(way)
-            yes = True
-            return way, cost, siz, yes
+    while queue:
+        (cost, way) = heapq.heappop(queue)
+        node = way[-1]
         if node not in visited:
+            expanded += 1
             visited.add(node)
-            for Ady in grafo[node]:
+            if node == goal:
+                if(cost == 18):
+                    yes = True
+                return way, cost, expanded, True
+            del graph[node]['heuristic']
+            for Ady, weight in graph[node].items():
                 if Ady not in visited:
-                    Cost2 = cost + grafo[node][Ady]
-                    way2 = way.copy()
+                    Cost2 = cost + weight
+                    way2 = list(way)
                     way2.append(Ady)
-                    heapq.heappush(lista, (Cost2, Ady, way))
-    non = None
-    return non, non, non, yes
+                    heapq.heappush(queue, (Cost2, way2))
+    return None, None, None, yes
     
 def dfs(grafo, init, goal):
     lista = [(init, [init], 0)]
@@ -62,7 +65,8 @@ def dfs(grafo, init, goal):
         node, way, cost = lista.pop()
         if goal == node:
             siz = len(way)
-            yes = True
+            if(cost == 18):
+                yes = True
             return way, cost, siz, yes
         if node not in visited:
             visited.add(node)
@@ -85,7 +89,8 @@ def gbfs(grafo, init, goal):
         if node == goal:
             size = len(way)
             cost = sum(grafo[way[i]][way[i+1]] for i in range(size-1))
-            yes = True
+            if(cost == 18):
+                yes = True
             return way, cost, size, yes
         if node not in visited:
             visited.add(node)
@@ -104,6 +109,7 @@ def a_star_search(graph, init, goal):
     way = []
     cost = 0
     expanded = 0
+    yes = False
     heapq.heappush(queue, (0, init, way, cost))
     
     while queue:
@@ -111,20 +117,23 @@ def a_star_search(graph, init, goal):
         visited.add(node)
         
         if goal == node:
-            return way + [node], cost, expanded, True
+            if(cost == 18):
+                yes = True
+            return way + [node], cost, expanded, yes
     
         for Ady, weight in graph[node].items():
             if Ady not in visited:
                 h = get_heuristic(Ady,heur)
                 heapq.heappush(queue, (cost + weight + h, Ady, way + [node], cost + weight))
                 expanded += 1
-    return None, None, None, False
+    return None, None, None, yes
 
 non = None
 grafo, init, goal = read_file('grafo.txt')
 #Aca es donde debe cambiar la busqueda por dfs, ucs, gbfs, a_star_search
-way, cost, expanded, opt = dfs(grafo, init, goal)
+way, cost, expanded, opt = ucs(grafo, init, goal)
 if way != non:
+    #La solucion optima es de coste 18, si obtienen una distinta arrojara No, en cambio si obtienen 18 arrojara Si
     if opt == True:
         print('Solucion optima encontrada: Si')
     else:
