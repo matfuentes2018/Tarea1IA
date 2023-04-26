@@ -3,6 +3,9 @@ heur = {}
 sizLines = 0
 import math
 
+def get_heuristic(node, heur):
+    return heur.get(node, float('inf'))
+
 def read_file(graph_name):
     grafo = {} 
     sizLines = 0
@@ -74,43 +77,54 @@ def dfs(grafo, init, goal):
     non = None
     return non, non, non, yes
 
-def greedy(grafo, init, goal):
-    # Inicializamos la lista de nodos visitados y la cola de prioridad
+def gbfs(grafo, init, goal):
+    lista = [(0, init, [init])]
     visited = set()
-    queue = [(heur[init], init)]
     yes = False
-    
-    while queue:
-        # Extraemos el nodo con la heurística más baja
-        h, node = heapq.heappop(queue)
-        
+    while lista:
+        h, node, way = heapq.heappop(lista)
         if node == goal:
-            # Si el nodo es el objetivo, devolvemos la solución
-            size = len(visited)
-            cost = 0
-            for i in range(size-1):
-                cost += grafo[visited[i]][visited[i+1]]
-            cost += grafo[visited[size-1]][goal]
+            size = len(way)
+            cost = sum(grafo[way[i]][way[i+1]] for i in range(size-1))
             yes = True
-            return visited, cost, size, yes
-        
+            return way, cost, size, yes
         if node not in visited:
-            # Si el nodo no ha sido visitado, lo marcamos como visitado
             visited.add(node)
-            
             for ady in grafo[node]:
-                # Agregamos los nodos adyacentes a la cola de prioridad
                 if ady not in visited:
-                    print(ady)
-                    heapq.heappush(queue, (heur[ady], ady))
-    
+                    h = get_heuristic(ady, heur)
+                    way2 = way.copy()
+                    way2.append(ady)
+                    heapq.heappush(lista, (h, ady, way2))
     non = None
     return non, non, non, yes
 
+def a_star_search(graph, init, goal):
+    queue = []
+    visited = set()
+    way = []
+    cost = 0
+    expanded = 0
+    heapq.heappush(queue, (0, init, way, cost))
+    
+    while queue:
+        _, node, way, cost = heapq.heappop(queue)
+        visited.add(node)
+        
+        if goal == node:
+            return way + [node], cost, expanded, True
+    
+        for Ady, weight in graph[node].items():
+            if Ady not in visited:
+                h = get_heuristic(Ady,heur)
+                heapq.heappush(queue, (cost + weight + h, Ady, way + [node], cost + weight))
+                expanded += 1
+    return None, None, None, False
+
 non = None
 grafo, init, goal = read_file('grafo.txt')
-#utilizar el siguiente en caso de usar busqueda greedy
-way, cost, expanded, opt = greedy(grafo, init, goal)
+#Aca es donde debe cambiar la busqueda por dfs, ucs, gbfs, a_star_search
+way, cost, expanded, opt = dfs(grafo, init, goal)
 if way != non:
     if opt == True:
         print('Solucion optima encontrada: Si')
