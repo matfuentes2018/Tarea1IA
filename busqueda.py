@@ -52,30 +52,22 @@ class Arbol:
 
 def leer_archivo(nombre_archivo):
     with open(nombre_archivo) as archivo:
-        contenido = archivo.readlines()
-    
-    init = contenido[0].split()[1]
-    goal = contenido[1].split()[1]
+        contenido = archivo.read().split('\n')
 
-    nodos_heuristicas = {}
-    for i in range(2, len(contenido)-1):
-        nodo, heuristica = contenido[i].split()
-        nodos_heuristicas[nodo] = int(heuristica)
+        nodo_inicio = contenido[0].split()[1]
+        nodo_final = contenido[1].split()[1]
 
-    aristas = []
-    for i in range(len(contenido)-1, len(contenido)*2-2):
-        datos_arista = contenido[i].split()
-        arista = (datos_arista[0], datos_arista[1], int(datos_arista[2]))
-        aristas.append(arista)
+        grafo = {}
+        for i in range(2, len(contenido)):
+            if contenido[i]:
+                if len(contenido[i].split()) == 2:
+                    nodo, heuristica = contenido[i].split()
+                    grafo[nodo] = []
+                else:
+                    origen, destino, costo = contenido[i].split()
+                    grafo[origen].append((destino, int(costo)))
 
-    arbol = Arbol(init, goal)
-    for arista in aristas:
-        nodo1, nodo2, costo = arista
-        nodo1 = Nodo(nodo1, nodos_heuristicas[nodo1])
-        nodo2 = Nodo(nodo2, nodos_heuristicas[nodo2])
-        arbol.agregar_arista(nodo1, nodo2, costo)
-
-    return arbol
+    return grafo, nodo_inicio, nodo_final
 
 def busqueda_greedy(arbol, f_meta):
     pila_nodos = [(arbol.nodo_init, f_meta(arbol.nodo_init))]

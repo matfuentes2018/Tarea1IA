@@ -7,7 +7,7 @@ D 6
 E 3
 F 2
 G 0
-A, B, 2
+A B 2
 A, C, 4
 B, D, 4
 B, E, 6
