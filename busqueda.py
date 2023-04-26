@@ -20,24 +20,7 @@ class Nodo:
     def __eq__(self, other):
         return self.nombre == other.nombre
 
-def busqueda_costo_uniforme(nodo_inicial, nodo_objetivo):
-    frontera = PriorityQueue()
-    frontera.put(nodo_inicial)
-    
-    while not frontera.empty():
-        nodo_actual = frontera.get()
-        
-        if nodo_actual == nodo_objetivo:
-            return nodo_actual
-        
-        nodo_actual.visitado = True
-        
-        for sucesor, costo in nodo_actual.get_sucesores():
-            if not sucesor.visitado:
-                sucesor.costo = nodo_actual.costo + costo
-                frontera.put(sucesor)
-    
-    return None
+
     
 class Arbol:
     def __init__(self, raiz):
@@ -67,50 +50,87 @@ class Arbol:
         camino.pop()
         return camino, costo, self.nodos_expandidos, False
 
-if __name__ == '__main__':
-    with open('grafo.txt', 'r') as file:
-        grafo = file.readlines()
+def leer_archivo(nombre_archivo):
+    with open(nombre_archivo, 'r') as f:
+        lineas = f.readlines()
+    
+    linea_init = lineas[0].strip()
+    linea_goal = lineas[1].strip()
+    info_nodos = lineas[2:-1]
+    info_aristas = lineas[-1].strip().split(', ')
+    
+    init = Nodo(linea_init.split()[1])
+    goal = Nodo(linea_goal.split()[1])
+    
+    arbol = Arbol(init, goal)
+    nodos = {init.nombre: init}
+    
+    for info in info_nodos:
+        nombre, valor_h = info.strip().split()
+        nodos[nombre] = Nodo(nombre, valor_h)
+    
+    for info in info_aristas:
+        nombre1, nombre2, costo = info.strip().split()
+        nodos[nombre1].add_sucesor(nodos[nombre2], int(costo))
+    
+    for nodo in nodos.values():
+        arbol.agregar_nodo(nodo)
+    
+    return arbol
+
+def busqueda_greedy(arbol, f_meta):
+    pila_nodos = [(arbol.nodo_init, f_meta(arbol.nodo_init))]
+    
+    while pila_nodos:
+        nodo_actual, _ = pila_nodos.pop()
+        nodo_actual.visitado = True
         
-    # Nodo inicial
-    nodo_inicial = grafo[0].split(' ')[1].strip()
+        if nodo_actual == arbol.nodo_goal:
+            return True
+        
+        sucesores = nodo_actual.get_sucesores()
+        sucesores.sort(key=lambda s: f_meta(s[0]))
+        
+        for sucesor, costo in sucesores:
+            if not sucesor.visitado:
+                pila_nodos.append((sucesor, f_meta(sucesor)))
     
-    # Nodo objetivo
-    nodo_objetivo = grafo[1].split(' ')[1].strip()
+    return False
     
-    # Heurísticas
-    heur = {}
-    for linea in grafo[2:]:
-        if ',' not in linea:
-            nodo, heuristica = linea.strip().split(' ')
-            heur[nodo] = int(heuristica)
-            
-    # Aristas
-    nodos = {}
-    for linea in grafo[2:]:
-        if ',' in linea:
-            nodo1, nodo2, costo = linea.strip().split(' ')
-            costo = int(costo)
-            
-            if nodo1 not in nodos:
-                nodos[nodo1] = Nodo(nodo1)
-            if nodo2 not in nodos:
-                nodos[nodo2] = Nodo(nodo2)
-            
-            nodos[nodo1].add_sucesor(nodos[nodo2])
-            nodos[nodo2].add_sucesor(nodos[nodo1])
-            
-            nodos[nodo1].costo = costo
-            nodos[nodo2].costo = costo
-            
-    raiz = nodos[nodo_inicial]
-    arbol = Arbol(raiz)
-    camino, costo, nodos_expandidos, solucion_optima = arbol.dfs_aleatoria(raiz, nodo_objetivo, [], 0)
+def busqueda_costo_uniforme(nodo_inicial, nodo_objetivo):
+    frontera = PriorityQueue()
+    frontera.put(nodo_inicial)
     
-    if solucion_optima:
-        print("Solución encontrada:")
-        for nodo in camino:
-            print(nodo.nombre, end=" ")
-        print(f"\nCosto: {costo}")
-    else:
-        print("No se encontró solución.")
-    print(f"Nodos expandidos: {nodos_expandidos}")
+    while not frontera.empty():
+        nodo_actual = frontera.get()
+        
+        if nodo_actual == nodo_objetivo:
+            return nodo_actual
+        
+        nodo_actual.visitado = True
+        
+        for sucesor, costo in nodo_actual.get_sucesores():
+            if not sucesor.visitado:
+                sucesor.costo = nodo_actual.costo + costo
+                frontera.put(sucesor)
+    
+    return None
+
+
+if __name__ == '__main__':
+    arbol = leer_archivo('grafo.txt')
+    heuristica = lambda n: int(n.valor_h)
+    
+    print('Búsqueda DFS aleatoria')
+    dfs_aleatoria = arbol.busqueda_dfs_aleatoria()
+    print('Camino:', dfs_aleatoria)
+    print('Costo:', arbol.calcular_costo_camino(dfs_aleatoria))
+    
+    print('\nBúsqueda por costo uniforme')
+    costo_uniforme = arbol.busqueda_costo_uniforme()
+    print('Camino:', costo_uniforme)
+    print('Costo:', arbol.calcular_costo_camino(costo_uniforme))
+    
+    print('\nBúsqueda Greedy')
+    greedy = busqueda_greedy(arbol, heuristica)
+    print('Encontrado:', greedy)
